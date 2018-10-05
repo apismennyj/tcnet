@@ -4,7 +4,7 @@ from django.db import models
 
 
 class TCUser(AbstractUser):
-    additional_data = models.TextField(null=True)
+    additional_data = models.TextField(null=True, blank=True)
     email = models.EmailField('email address', blank=False, unique=True)
 
     def __str__(self):
@@ -12,7 +12,7 @@ class TCUser(AbstractUser):
 
 
 class Post(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
     body = models.TextField()
     date_published = models.DateTimeField('Post date', auto_now=True)
 
@@ -21,8 +21,8 @@ class Post(models.Model):
 
 
 class Like(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='likes')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
     date_published = models.DateTimeField('Like date', auto_now=True)
 
     class Meta:

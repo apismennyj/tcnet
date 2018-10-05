@@ -3,13 +3,23 @@ import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
 from .models import Like, Post
+
+
+class ActiveUserSerializer(serializers.ModelSerializer):
+    num_posts = serializers.IntegerField()
+    num_likes = serializers.IntegerField()
+
+    class Meta:
+        model = get_user_model()
+        fields = ('id', 'username', 'num_posts', 'num_likes')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ('url', 'username', 'password', 'email', 'additional_data')
+        fields = ('id', 'url', 'username', 'password', 'email', 'additional_data')
 
     def validate_email(self, value):
         """
@@ -28,12 +38,13 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
         created_user = super(UserSerializer, self).create(validated_data)
 
-        clearbit.key = settings.CLEARBIT_KEY
-        response = clearbit.Enrichment.find(email=created_user.email, stream=True)
+        if settings.CLEARBIT_ENABLED:
+            clearbit.key = settings.CLEARBIT_KEY
+            response = clearbit.Enrichment.find(email=created_user.email, stream=True)
 
-        if response['person'] is not None:
-            created_user.additional_data = response
-            created_user.save()
+            if response and response['person'] is not None:
+                created_user.additional_data = response
+                created_user.save()
 
         return created_user
 
@@ -41,10 +52,10 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 class PostSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Post
-        fields = ('user', 'body', 'date_published')
+        fields = ('id', 'user', 'body', 'date_published')
 
 
 class LikeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Like
-        fields = ('user', 'post', 'date_published')
+        fields = ('id', 'user', 'post', 'date_published')
